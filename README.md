@@ -1,5 +1,6 @@
 Helper utilities to develop [MapLibre Native](https://github.com/maplibre/maplibre-native) code.  The actual `maplibre-native` repo would be a subdirectory under this one (but not a sub-module to avoid various build and clone issues).  This justfile should be living in the MapLibre Native repo, but the maintainers feel a [bit uncertain](https://github.com/maplibre/maplibre-native/pull/2653) about it for now, so keeping it separate. 
 
+These are some of the recipes available, but this list might not be up to date.
 ![just-info.png](just-info.png)
 
 * Clone this repo
