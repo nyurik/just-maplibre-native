@@ -24,7 +24,7 @@ just_cmd := "cd maplibre-native && " + docker_cmd
 init:
     if [[ -d "maplibre-native" ]]; then \
         echo "maplibre-native/ sub-dir already exists" ;\
-        exit 0
+        exit 0 ;\
     fi
     git clone --recurse-submodules -j8 --origin upstream https://github.com/maplibre/maplibre-native.git
 
