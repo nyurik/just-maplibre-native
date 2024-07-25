@@ -12,12 +12,21 @@ just_cmd := "cd maplibre-native && " + docker_cmd
 @_default:
     {{just_executable()}} --list
 
+# Print if docker is initialized or not
 @status-docker:
     if [ '{{docker_cmd}}' == '' ]; then \
       echo "Docker is not initialized, will build directly on the host" ;\
     else \
       echo "Docker is initialized, will use it for all build commands" ;\
     fi
+
+# Clone maplibre-native repository with all submodules if it doesn't already exist
+init:
+    if [[ -d "maplibre-native" ]]; then \
+        echo "maplibre-native/ sub-dir already exists" ;\
+        exit 0
+    fi
+    git clone --recurse-submodules -j8 --origin upstream https://github.com/maplibre/maplibre-native.git
 
 # interactively clean-up git repository, keeping IDE files
 git-clean:
@@ -30,23 +39,25 @@ git-clean:
     echo ""
     echo "Docker has been initialized, all build commands will run with it. Run 'just status-docker' to check"
 
-# run command with docker, e.g. `just docker bazel build //:mbgl-core`, or open docker shell with `just docker`
+# run a command with docker, e.g. `just docker bazel build //:mbgl-core`, or open docker shell with `just docker`
 docker *ARGS:
     if [ '{{docker_cmd}}' == '' ]; then \
-      echo "Docker is not initialized. Run  just init-docker  first." ;\
+      echo "Docker is not initialized. You must first run   just init-docker" ;\
       exit 1 ;\
     fi
     {{just_cmd}} {{ARGS}}
 
-
+# Initialize cmake build directory, possibly with docker if initialized
 init-cmake:
     {{just_cmd}} cmake -B build -GNinja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMLN_WITH_CLANG_TIDY=OFF -DMLN_WITH_COVERAGE=OFF -DMLN_DRAWABLE_RENDERER=ON -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
 
-cmake TARGET="mbgl-render":
+# Run `cmake --build` with the given target, possibly with docker if initialized
+cmake-build TARGET="mbgl-render":
     if [[ ! -d "maplibre-native/build" ]]; then \
       {{just_executable()}} init-cmake ;\
     fi
-    {{just_cmd}} cmake --build build --target {{TARGET}} -j $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null)
+    {{just_cmd}} cmake --build build --target '{{TARGET}}' -j $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null)
 
-bazel TARGET="mbgl-core":
-    {{just_cmd}} bazel build //:{{TARGET}}
+# Run `bazel build` with the given target, possibly with docker if initialized
+bazel-build TARGET="mbgl-core":
+    {{just_cmd}} bazel 'build //:{{TARGET}}'
