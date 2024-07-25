@@ -41,7 +41,7 @@ git-clean:
 
 # run a command with docker, e.g. `just docker bazel build //:mbgl-core`, or open docker shell with `just docker`
 docker *ARGS:
-    if [ '{{docker_cmd}}' == '' ]; then \
+    @if [ '{{docker_cmd}}' == '' ]; then \
       echo "Docker is not initialized. You must first run   just init-docker" ;\
       exit 1 ;\
     fi
@@ -53,11 +53,11 @@ init-cmake:
 
 # Run `cmake --build` with the given target, possibly with docker if initialized
 cmake-build TARGET="mbgl-render":
-    if [[ ! -d "maplibre-native/build" ]]; then \
+    @if [[ ! -d "maplibre-native/build" ]]; then \
       {{just_executable()}} init-cmake ;\
     fi
-    {{just_cmd}} cmake --build build --target '{{TARGET}}' -j $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null)
+    {{just_cmd}} cmake --build build --target {{quote(TARGET)}} -j $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null)
 
 # Run `bazel build` with the given target, possibly with docker if initialized
 bazel-build TARGET="mbgl-core":
-    {{just_cmd}} bazel 'build //:{{TARGET}}'
+    {{just_cmd}} bazel build '//:{{TARGET}}'
