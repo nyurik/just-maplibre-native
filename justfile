@@ -2,6 +2,7 @@
 
 # Always require bash. If we allow it to be default, it may work incorrectly on Windows
 set shell := ["bash", "-c"]
+set positional-arguments
 
 # if maplibre-native/docker/.cache/use-docker exists, use docker for all commands
 docker_cmd := if path_exists("maplibre-native/docker/.cache/use-docker") != "true" { "" } else {
@@ -58,9 +59,9 @@ cmake-build TARGET="mbgl-render":
     fi
     {{just_cmd}} cmake --build build --target {{quote(TARGET)}} -j $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null)
 
-# Run `bazel build` with the given target, possibly with docker if initialized
-bazel-build TARGET="mbgl-core":
-    {{just_cmd}} bazel build '//:{{TARGET}}'
+# Run `bazel build` with the given targets, possibly with docker if initialized
+bazel-build *TARGETS="//:mbgl-core":
+    {{just_cmd}} bazel build "$@"
 
 # Creates and opens Xcode project for iOS
 [macos]
