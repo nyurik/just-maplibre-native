@@ -6,7 +6,7 @@ Helper utilities to develop [MapLibre Native](https://github.com/maplibre/maplib
 
 * Clone this repo
 * Install [just](https://github.com/casey/just#readme), a modern alternative to `make`.
-* If you already have a local clone of `maplibre-native`, move it as a sub-dir of this one.
-* If not, run `just clone` to clone the [repo](https://github.com/maplibre/maplibre-native) with submodules to `./maplibre-native`.
+* If you already have a local clone of [maplibre-native](https://github.com/maplibre/maplibre-native), move it as a sub-dir of this one.
+* If not, run `just clone` to clone that repo with submodules to `./maplibre-native`.
 * Run `just` to see the list of available commands.
 * To use Docker, run `just init-docker` to initialize the Docker container. All subsequent cmake and bazel commands will use docker.
