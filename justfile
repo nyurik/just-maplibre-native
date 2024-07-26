@@ -61,3 +61,10 @@ cmake-build TARGET="mbgl-render":
 # Run `bazel build` with the given target, possibly with docker if initialized
 bazel-build TARGET="mbgl-core":
     {{just_cmd}} bazel build '//:{{TARGET}}'
+
+# Creates and opens Xcode project for iOS
+[macos]
+xcode:
+    cd maplibre-native && \
+    bazel run //platform/ios:xcodeproj --@rules_xcodeproj//xcodeproj:extra_common_flags="--//:renderer=metal" && \
+    xed platform/ios/MapLibre.xcodeproj
