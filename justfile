@@ -59,8 +59,8 @@ cmake-build TARGET="mbgl-render":
     fi
     {{just_cmd}} cmake --build build --target {{quote(TARGET)}} -j $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null)
 
-# Run `bazel build` with the given targets, possibly with docker if initialized
-bazel-build *TARGETS="//:mbgl-core":
+# Run `bazel build` with the given arguments, possibly with docker if initialized
+bazel-build *ARGS="//:mbgl-core":
     {{just_cmd}} bazel build "$@"
 
 # Creates and opens Xcode project for iOS
