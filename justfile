@@ -21,7 +21,7 @@ just_cmd := "cd maplibre-native && " + docker_cmd
     fi
 
 # Clone maplibre-native repository with all submodules if it doesn't already exist
-init:
+clone:
     if [[ -d "maplibre-native" ]]; then \
         echo "maplibre-native/ sub-dir already exists" ;\
         exit 0 ;\
