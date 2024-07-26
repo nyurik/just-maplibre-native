@@ -66,5 +66,5 @@ bazel-build TARGET="mbgl-core":
 [macos]
 xcode:
     cd maplibre-native && \
-     bazel run //platform/ios:xcodeproj --@rules_xcodeproj//xcodeproj:extra_common_flags="--//:renderer=metal" && \
-     xed platform/ios/MapLibre.xcodeproj
+    bazel run //platform/ios:xcodeproj --@rules_xcodeproj//xcodeproj:extra_common_flags="--//:renderer=metal" && \
+    xed platform/ios/MapLibre.xcodeproj
