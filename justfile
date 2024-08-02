@@ -1,7 +1,7 @@
 #!/usr/bin/env just --justfile
 
 # This command requires just v1.33+
-set working-directory := 'maplibre-native'
+set working-directory := 'maplibre-native2'
 
 
 # Always require bash. If we allow it to be default, it may work incorrectly on Windows
@@ -15,6 +15,7 @@ docker_cmd := if path_exists(join(justfile_directory(), "maplibre-native/docker/
     'docker run --rm -it -v "$PWD:/app/" -v "$PWD/docker/.cache:/home/user/.cache" maplibre-native-image'
 }
 
+[no-cd]
 @_default:
     {{just_executable()}} --list
 
@@ -27,6 +28,7 @@ docker_cmd := if path_exists(join(justfile_directory(), "maplibre-native/docker/
     fi
 
 # Clone maplibre-native repository with all submodules if it doesn't already exist
+[no-cd]
 clone:
     #!/usr/bin/env bash
     set -euo pipefail
