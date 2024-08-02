@@ -1,14 +1,19 @@
 #!/usr/bin/env just --justfile
 
+# This command requires just v1.33+
+set working-directory := 'maplibre-native'
+
+
 # Always require bash. If we allow it to be default, it may work incorrectly on Windows
 set shell := ["bash", "-c"]
 set positional-arguments
 
 # if maplibre-native/docker/.cache/use-docker exists, use docker for all commands
-docker_cmd := if path_exists("maplibre-native/docker/.cache/use-docker") != "true" { "" } else {
+# otherwise this is a no-op, i.e. the command will run in the user's environment
+# BUG workaround: https://github.com/casey/just/issues/2292
+docker_cmd := if path_exists(join(justfile_directory(), "maplibre-native/docker/.cache/use-docker")) != "true" { "" } else {
     'docker run --rm -it -v "$PWD:/app/" -v "$PWD/docker/.cache:/home/user/.cache" maplibre-native-image'
 }
-just_cmd := "cd maplibre-native && " + docker_cmd
 
 @_default:
     {{just_executable()}} --list
@@ -23,20 +28,25 @@ just_cmd := "cd maplibre-native && " + docker_cmd
 
 # Clone maplibre-native repository with all submodules if it doesn't already exist
 clone:
-    if [[ -d "maplibre-native" ]]; then \
-        echo "maplibre-native/ sub-dir already exists" ;\
-        exit 0 ;\
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd {{quote(justfile_directory())}}
+    # check if dir exists and is not empty
+    if [ -d "maplibre-native" ] && [ "$(ls -A maplibre-native)" ]; then
+      echo "maplibre-native directory already exists and is not empty"
+      exit 1
     fi
+    # git clone will clone into an existing directory if that directory is empty
     git clone --recurse-submodules -j8 --origin upstream https://github.com/maplibre/maplibre-native.git
 
 # interactively clean-up git repository, keeping IDE files
 git-clean:
-    cd maplibre-native && git clean -dxfi -e .idea -e .clwb -e .vscode -e platform/darwin/bazel/config.bzl
+    git clean -dxfi -e .idea -e .clwb -e .vscode -e platform/darwin/bazel/config.bzl
 
 # (re-)build `maplibre-native-image` docker image for the current user
 @init-docker:
-    cd maplibre-native && docker build -t maplibre-native-image --build-arg USER_UID=$(id -u) --build-arg USER_GID=$(id -g) -f docker/Dockerfile docker
-    touch maplibre-native/docker/.cache/use-docker
+    docker build -t maplibre-native-image --build-arg USER_UID=$(id -u) --build-arg USER_GID=$(id -g) -f docker/Dockerfile docker
+    touch docker/.cache/use-docker
     echo ""
     echo "Docker has been initialized, all build commands will run with it. Run 'just status-docker' to check"
 
@@ -46,26 +56,26 @@ docker *ARGS:
       echo "Docker is not initialized. You must first run   just init-docker" ;\
       exit 1 ;\
     fi
-    {{just_cmd}} {{ARGS}}
+    {{docker_cmd}} {{ARGS}}
 
 # Initialize cmake build directory, possibly with docker if initialized
 init-cmake:
-    {{just_cmd}} cmake -B build -GNinja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMLN_WITH_CLANG_TIDY=OFF -DMLN_WITH_COVERAGE=OFF -DMLN_DRAWABLE_RENDERER=ON -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+    {{docker_cmd}} cmake -B build -GNinja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMLN_WITH_CLANG_TIDY=OFF -DMLN_WITH_COVERAGE=OFF -DMLN_DRAWABLE_RENDERER=ON -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
 
 # Run `cmake --build` with the given target, possibly with docker if initialized
 cmake-build TARGET="mbgl-render":
-    @if [[ ! -d "maplibre-native/build" ]]; then \
+    @if [[ ! -d "build" ]]; then \
       {{just_executable()}} init-cmake ;\
     fi
-    {{just_cmd}} cmake --build build --target {{quote(TARGET)}} -j $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null)
+    {{docker_cmd}} cmake --build build --target {{quote(TARGET)}} -j $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null)
 
 # Run `bazel build` with the given arguments, possibly with docker if initialized
 bazel-build *ARGS="//:mbgl-core":
-    {{just_cmd}} bazel build "$@"
+    {{docker_cmd}} bazel build "$@"
 
 # Creates and opens Xcode project for iOS
 [macos]
 xcode:
-    cd maplibre-native && \
-    bazel run //platform/ios:xcodeproj --@rules_xcodeproj//xcodeproj:extra_common_flags="--//:renderer=metal" && \
-    xed platform/ios/MapLibre.xcodeproj
+    bazel run //platform/ios:xcodeproj \
+          --@rules_xcodeproj//xcodeproj:extra_common_flags="--//:renderer=metal" \
+      && xed platform/ios/MapLibre.xcodeproj
