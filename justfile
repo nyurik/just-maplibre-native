@@ -31,7 +31,7 @@ clone:
 
 # interactively clean-up git repository, keeping IDE files
 git-clean:
-    cd maplibre-native && git clean -dxfi -e .idea -e .clwb -e .vscode
+    cd maplibre-native && git clean -dxfi -e .idea -e .clwb -e .vscode -e platform/darwin/bazel/config.bzl
 
 # (re-)build `maplibre-native-image` docker image for the current user
 @init-docker:
