@@ -1,7 +1,7 @@
 #!/usr/bin/env just --justfile
 
 # This command requires just v1.33+
-set working-directory := 'maplibre-native2'
+set working-directory := 'maplibre-native'
 
 
 # Always require bash. If we allow it to be default, it may work incorrectly on Windows
