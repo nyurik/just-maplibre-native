@@ -29,6 +29,7 @@ docker_cmd := if path_exists(join(justfile_directory(), "maplibre-native/docker/
 
 # Clone maplibre-native repository with all submodules if it doesn't already exist
 [no-cd]
+[no-exit-message]
 clone:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -42,7 +43,14 @@ clone:
     git clone --recurse-submodules -j8 --origin upstream https://github.com/maplibre/maplibre-native.git
 
 # interactively clean-up git repository, keeping IDE files
+[no-exit-message]
 git-clean:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "$(git status -u --porcelain)" ]; then
+      echo 'GIT repo is not clean. Commit needed changes and/or reset to clean state with  `git reset --hard`'
+      exit 1
+    fi
     git clean -dxfi -e .idea -e .clwb -e .ijwb -e .vscode -e platform/darwin/bazel/config.bzl
 
 # (re-)build `maplibre-native-image` docker image for the current user
