@@ -85,6 +85,10 @@ cmake-build TARGET="mbgl-render":
 bazel-build *ARGS="//:mbgl-core":
     {{docker_cmd}} bazel build "$@"
 
+# Run `bazel clean`, optionally with extra arguments, possibly with docker if initialized
+bazel-clean *ARGS:
+    {{docker_cmd}} bazel clean "$@"
+
 # Creates and opens Xcode project for iOS
 [macos]
 xcode:
