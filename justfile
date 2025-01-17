@@ -12,7 +12,7 @@ set positional-arguments
 # otherwise this is a no-op, i.e. the command will run in the user's environment
 # BUG workaround: https://github.com/casey/just/issues/2292
 docker_cmd := if path_exists(join(justfile_directory(), "maplibre-native/docker/.cache/use-docker")) != "true" { "" } else {
-    'docker run --rm -it -v "$PWD:/app/" -v "$PWD/docker/.cache:/home/user/.cache" maplibre-native-image'
+    'docker run --rm -it -v "$PWD:/app/" -v "$PWD/docker/.cache:/home/ubuntu/.cache" maplibre-native-image'
 }
 
 [no-cd]
@@ -72,7 +72,7 @@ docker *ARGS:
 
 # Initialize cmake build directory, possibly with docker if initialized
 init-cmake:
-    {{docker_cmd}} cmake -B build -GNinja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMLN_WITH_CLANG_TIDY=OFF -DMLN_WITH_COVERAGE=OFF -DMLN_DRAWABLE_RENDERER=ON -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+    {{docker_cmd}} cmake -B build -GNinja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMLN_WITH_CLANG_TIDY=OFF -DMLN_WITH_COVERAGE=OFF -DMLN_DRAWABLE_RENDERER=ON -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON -DMLN_USE_RUST=ON
 
 # Run `cmake --build` with the given target, possibly with docker if initialized
 cmake-build TARGET="mbgl-render":
