@@ -19,13 +19,9 @@ docker_cmd := if path_exists(join(justfile_directory(), "maplibre-native/docker/
 @_default:
     {{just_executable()}} --list
 
-# Print if docker is initialized or not
-@status-docker:
-    if [ '{{docker_cmd}}' == '' ]; then \
-      echo "Docker is not initialized, will build directly on the host" ;\
-    else \
-      echo "Docker is initialized, will use it for all build commands" ;\
-    fi
+# Run `bazel clean`, optionally with extra arguments, possibly with docker if initialized
+bazel-clean *ARGS:
+    {{docker_cmd}} bazel clean "$@"
 
 # Clone maplibre-native repository with all submodules if it doesn't already exist
 [no-cd]
@@ -42,6 +38,14 @@ clone:
     # git clone will clone into an existing directory if that directory is empty
     git clone --recurse-submodules -j8 --origin upstream https://github.com/maplibre/maplibre-native.git
 
+# run a command with docker, e.g. `just docker bazel build //:mbgl-core`, or open docker shell with `just docker`
+docker *ARGS:
+    @if [ '{{docker_cmd}}' == '' ]; then \
+      echo "Docker is not initialized. You must first run   just init-docker" ;\
+      exit 1 ;\
+    fi
+    {{docker_cmd}} {{ARGS}}
+
 # interactively clean-up git repository, keeping IDE files
 [no-exit-message]
 git-clean:
@@ -54,21 +58,6 @@ git-clean:
     # Some cache files have read-only bit set
     chmod -R u+rw docker || true
     git clean -dxfi -e .idea -e .clwb -e .ijwb -e .vscode -e platform/darwin/bazel/config.bzl
-
-# (re-)build `maplibre-native-image` docker image for the current user
-@init-docker:
-    docker build -t maplibre-native-image --build-arg USER_UID=$(id -u) --build-arg USER_GID=$(id -g) -f docker/Dockerfile docker
-    touch docker/.cache/use-docker
-    echo ""
-    echo "Docker has been initialized, all build commands will run with it. Run 'just status-docker' to check"
-
-# run a command with docker, e.g. `just docker bazel build //:mbgl-core`, or open docker shell with `just docker`
-docker *ARGS:
-    @if [ '{{docker_cmd}}' == '' ]; then \
-      echo "Docker is not initialized. You must first run   just init-docker" ;\
-      exit 1 ;\
-    fi
-    {{docker_cmd}} {{ARGS}}
 
 # Initialize cmake build directory, possibly with docker if initialized
 init-cmake:
@@ -85,9 +74,20 @@ cmake-build TARGET="mbgl-render":
 bazel-build *ARGS="//:mbgl-core":
     {{docker_cmd}} bazel build "$@"
 
-# Run `bazel clean`, optionally with extra arguments, possibly with docker if initialized
-bazel-clean *ARGS:
-    {{docker_cmd}} bazel clean "$@"
+# (re-)build `maplibre-native-image` docker image for the current user
+@init-docker:
+    docker build -t maplibre-native-image --build-arg USER_UID=$(id -u) --build-arg USER_GID=$(id -g) -f docker/Dockerfile docker
+    touch docker/.cache/use-docker
+    echo ""
+    echo "Docker has been initialized, all build commands will run with it. Run 'just status-docker' to check"
+
+# Print if docker is initialized or not
+@status-docker:
+    if [ '{{docker_cmd}}' == '' ]; then \
+      echo "Docker is not initialized, will build directly on the host" ;\
+    else \
+      echo "Docker is initialized, will use it for all build commands" ;\
+    fi
 
 # Creates and opens Xcode project for iOS
 [macos]
