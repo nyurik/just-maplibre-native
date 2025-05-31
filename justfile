@@ -19,6 +19,10 @@ docker_cmd := if path_exists(join(justfile_directory(), "maplibre-native/docker/
 @_default:
     {{just_executable()}} --list
 
+# Run `bazel build` with the given arguments, possibly with docker if initialized
+bazel-build *ARGS="//:mbgl-core":
+    {{docker_cmd}} bazel build "$@"
+
 # Run `bazel clean`, optionally with extra arguments, possibly with docker if initialized
 bazel-clean *ARGS:
     {{docker_cmd}} bazel clean "$@"
@@ -37,6 +41,13 @@ clone:
     fi
     # git clone will clone into an existing directory if that directory is empty
     git clone --recurse-submodules -j8 --origin upstream https://github.com/maplibre/maplibre-native.git
+
+# Run `cmake --build` with the given target, possibly with docker if initialized
+cmake-build TARGET="mbgl-render":
+    @if [[ ! -d "build" ]]; then \
+      {{just_executable()}} init-cmake ;\
+    fi
+    {{docker_cmd}} cmake --build build --target {{quote(TARGET)}} -j $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null)
 
 # run a command with docker, e.g. `just docker bazel build //:mbgl-core`, or open docker shell with `just docker`
 docker *ARGS:
@@ -62,17 +73,6 @@ git-clean:
 # Initialize cmake build directory, possibly with docker if initialized
 init-cmake:
     {{docker_cmd}} cmake -B build -GNinja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMLN_WITH_CLANG_TIDY=OFF -DMLN_WITH_COVERAGE=OFF -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON -DMLN_USE_RUST=ON
-
-# Run `cmake --build` with the given target, possibly with docker if initialized
-cmake-build TARGET="mbgl-render":
-    @if [[ ! -d "build" ]]; then \
-      {{just_executable()}} init-cmake ;\
-    fi
-    {{docker_cmd}} cmake --build build --target {{quote(TARGET)}} -j $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null)
-
-# Run `bazel build` with the given arguments, possibly with docker if initialized
-bazel-build *ARGS="//:mbgl-core":
-    {{docker_cmd}} bazel build "$@"
 
 # (re-)build `maplibre-native-image` docker image for the current user
 @init-docker:
